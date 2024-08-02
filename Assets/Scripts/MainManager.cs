@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -9,19 +10,22 @@ public class MainManager : MonoBehaviour
     public Brick BrickPrefab;
     public int LineCount = 6;
     public Rigidbody Ball;
-
+    
     public Text ScoreText;
+    public Text ScoreText1;
     public GameObject GameOverText;
+    
     
     private bool m_Started = false;
     private int m_Points;
-    
+
     private bool m_GameOver = false;
 
-    
-    // Start is called before the first frame update
+
     void Start()
     {
+        LoadMaxScore();
+        ScoreText1.text = $"Best Score: {MainGameManager.Instance.playerName} {MainGameManager.Instance.maxScore}";
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -40,7 +44,7 @@ public class MainManager : MonoBehaviour
 
     private void Update()
     {
-        if (!m_Started)
+        if (!m_Started && Input.GetKeyDown(KeyCode.Space))
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
@@ -53,7 +57,7 @@ public class MainManager : MonoBehaviour
                 Ball.AddForce(forceDir * 2.0f, ForceMode.VelocityChange);
             }
         }
-        else if (m_GameOver)
+        else if (m_GameOver && Input.GetKeyDown(KeyCode.Space))
         {
             if (Input.GetKeyDown(KeyCode.Space))
             {
@@ -66,11 +70,30 @@ public class MainManager : MonoBehaviour
     {
         m_Points += point;
         ScoreText.text = $"Score : {m_Points}";
+        if (m_Points > MainGameManager.Instance.maxScore)
+        {
+            MainGameManager.Instance.maxScore = m_Points;
+            MainGameManager.Instance.playerName = PlayerPrefs.GetString("CurrentPlayerName", "Player");
+            MainGameManager.Instance.SaveNameAndScore();
+            UpdateMaxScore();
+        }
     }
 
     public void GameOver()
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+        UpdateMaxScore();
+    }
+
+    void LoadMaxScore()
+    {
+        MainGameManager.Instance.LoadNameAndScore();
+        UpdateMaxScore();
+    }
+
+    void UpdateMaxScore()
+    {
+        ScoreText.text = $"Score : {m_Points}";
     }
 }
